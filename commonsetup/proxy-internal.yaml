@@ -22,24 +22,16 @@ spec:
       - name: config
         configMap:
           name: traefik-internal
-      - name: tlsio
-        secret:
-          secretName: traefik-tls-io
       containers:
       - image: traefik:1.7.9
         name: traefik-proxy-internal
         volumeMounts:
         - mountPath: /config
           name: config
-        - mountPath: /io
-          name: tlsio
         resources:
           requests:
             cpu: 100m
             memory: 50M
-          limits:
-            cpu: 100m
-            memory: 52M
         ports:
         - containerPort: 80
           name: traefik-http
