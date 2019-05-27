@@ -1,0 +1,84 @@
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  name: traefik-proxy
+  labels:
+    app: traefik-proxy
+    tier: proxy
+spec:
+  selector:
+    matchLabels:
+      app: traefik-proxy
+      tier: proxy
+  template:
+    metadata:
+      labels:
+        app: traefik-proxy
+        tier: proxy
+    spec:
+      serviceAccountName: traefik-ingress-controller
+      terminationGracePeriodSeconds: 60
+      volumes:
+      - name: tlsio
+        secret:
+          secretName: traefik-tls-io
+      - name: config
+        configMap:
+          name: traefik
+      containers:
+      - image: traefik:1.7.9
+        name: traefik-proxy
+        volumeMounts:
+        - mountPath: /config
+          name: config
+        - mountPath: /io
+          name: tlsio
+        resources:
+          requests:
+            cpu: 100m
+            memory: 52M
+          limits:
+            cpu: 100m
+            memory: 52M
+        ports:
+        - containerPort: 80
+          name: traefik-http
+        - containerPort: 8080
+          name: traefik-ui
+        - containerPort: 443
+          name: traefik-https
+        args:
+        - --configfile=/config/traefik.toml
+        - --api
+        - --kubernetes
+        - --logLevel=INFO
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: traefik-ingress-controller-scaler
+spec:
+  scaleTargetRef:
+    apiVersion: extensions/v1beta1 
+    kind: Deployment
+    name: traefik-proxy
+  minReplicas: 2
+  maxReplicas: 20
+  targetCPUUtilizationPercentage: 85
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: traefik-proxy
+spec:
+  type: LoadBalancer
+  selector:
+    app: traefik-proxy
+    tier: proxy
+  ports:
+  - port: 80
+    name: http
+    targetPort: 80
+  - port: 443
+    name: https
+    targetPort: 443
