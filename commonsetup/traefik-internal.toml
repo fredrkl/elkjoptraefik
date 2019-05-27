@@ -1,16 +1,8 @@
-defaultEntryPoints = ["http", "https"]
+defaultEntryPoints = ["http"]
 
 [entryPoints]
   [entryPoints.http]
   address = ":80"
-    [entryPoints.http.redirect] # redirect to https
-      entryPoint = "https"
-  [entryPoints.https]
-  address = ":443"
-    [entryPoints.https.tls]
-      [[entryPoints.https.tls.certificates]]
-        CertFile = "/io/tls.crt"
-        KeyFile = "/io/tls.key"
 
 [kubernetes]
   ingressClass = "traefik-internal"
